@@ -16,32 +16,33 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 直接创建 gradlew 和 wrapper 文件（不依赖外部下载）
-      - name: Create Gradle Wrapper
+      # ========== 关键修复：手动下载完整的 Gradle Wrapper ==========
+      - name: Fix Gradle Wrapper (download jar)
         run: |
           mkdir -p gradle/wrapper
-          # 创建 gradle-wrapper.properties
-          cat > gradle/wrapper/gradle-wrapper.properties << 'EOF'
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          EOF
-          # 创建 gradlew（这是一个简化版，但足够调用 gradle）
-          cat > gradlew << 'EOF'
-          #!/bin/sh
-          # Gradle startup script
-          if [ -z "$GRADLE_HOME" ]; then
-            GRADLE_HOME="$HOME/.gradle"
-          fi
-          exec "$JAVA_HOME/bin/java" -cp "$GRADLE_HOME/wrapper/dists/gradle-8.4-bin/*/gradle-8.4/lib/gradle-launcher-*.jar" org.gradle.launcher.GradleMain "$@"
-          EOF
+          # 下载官方 gradle-wrapper.jar（8.4 版本）
+          curl -L https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+          # 生成 gradlew 启动脚本
+          curl -L https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradlew -o gradlew
           chmod +x gradlew
+          # 写入正确的 properties
+          echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
+          echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
+          echo "distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
+          echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
+          echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
 
+      # ========== 验证 wrapper 是否存在（防止漏网） ==========
+      - name: Verify wrapper
+        run: |
+          ls -la gradle/wrapper/
+          ./gradlew --version
+
+      # ========== 正式构建 ==========
       - name: Build APK
         run: ./gradlew assembleDebug --stacktrace
 
+      # ========== 上传成果 ==========
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
