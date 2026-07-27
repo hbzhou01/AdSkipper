@@ -1,0 +1,4 @@
+<details><summary>点击展开</summary><pre>plugins {
+id 'com.android.application' version '8.4.0' apply false
+id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
+}</pre></details>
