@@ -1,0 +1,8 @@
+<details><summary>点击展开</summary><pre>pluginManagement {
+repositories { google(); mavenCentral(); gradlePluginPortal() }
+}
+dependencyResolutionManagement {
+repositories { google(); mavenCentral() }
+}
+rootProject.name = "AdSkipper"
+include ':app'</pre></details>
